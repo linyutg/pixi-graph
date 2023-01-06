@@ -8,8 +8,7 @@ import { Container } from '@pixi/display';
 import { Point, IPointData, Rectangle } from '@pixi/math';
 import { IAddOptions } from '@pixi/loaders';
 import { Viewport } from 'pixi-viewport';
-import { Cull } from '@pixi-essentials/cull';
-// import { Simple } from 'pixi-cull';
+import Cull from './cull';
 import { AbstractGraph } from 'graphology-types';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { GraphStyleDefinition, NodeStyleDefinition, resolveStyleDefinitions } from './utils/style';
@@ -101,7 +100,7 @@ export class PixiGraph<
   private app: Application;
   private textureCache: TextureCache;
   private viewport: Viewport;
-  // private cull: Simple;
+  private cull: Cull;
   private resizeObserver: ResizeObserver;
   private edgeLayer: Container;
   private frontEdgeLayer: Container;
@@ -158,9 +157,9 @@ export class PixiGraph<
       autoDensity: true,
     });
     this.container.appendChild(this.app.view);
-    // this.cull = new Simple({
-    //   dirtyTest: true,
-    // });
+    this.cull = new Cull({
+      dirtyTest: false,
+    });
 
     this.app.renderer.plugins.interaction.moveWhenInside = true;
     this.app.view.addEventListener('wheel', (event) => {
@@ -238,6 +237,7 @@ export class PixiGraph<
 
     // preload resources
     if (this.resources) {
+      // @ts-ignore
       this.app.loader.add(this.resources);
     }
     this.app.loader.load(() => {
@@ -529,10 +529,17 @@ export class PixiGraph<
     const node = this.nodeKeyToNodeObject.get(nodeKey)!;
     const nodePosition = { x: point.x, y: point.y };
     node.updatePosition(nodePosition);
+    // @ts-ignore
+    this.cull.updateObject(node.nodeGfx);
 
     // update style
     this.updateNodeStyleByKey(nodeKey);
     this.graph.edges(nodeKey).forEach(this.updateEdgeStyleByKey.bind(this));
+    this.graph.edges(nodeKey).forEach((edgeKey: string) => {
+      const edge = this.edgeKeyToEdgeObject.get(edgeKey)!;
+      // @ts-ignore
+      this.cull.updateObject(edge.edgeGfx);
+    });
   }
 
   private moveNodebyDelta(nodeKey: string, deltaX: number, deltaY: number) {
@@ -545,10 +552,17 @@ export class PixiGraph<
     const node = this.nodeKeyToNodeObject.get(nodeKey)!;
     const nodePosition = { x: x + deltaX, y: y + deltaY };
     node.updatePosition(nodePosition);
+    // @ts-ignore
+    this.cull.updateObject(node.nodeGfx);
 
     // update style
     this.updateNodeStyleByKey(nodeKey);
     this.graph.edges(nodeKey).forEach(this.updateEdgeStyleByKey.bind(this));
+    this.graph.edges(nodeKey).forEach((edgeKey: string) => {
+      const edge = this.edgeKeyToEdgeObject.get(edgeKey)!;
+      // @ts-ignore
+      this.cull.updateObject(edge.edgeGfx);
+    });
   }
 
   private enableNodeDragging() {
@@ -588,11 +602,8 @@ export class PixiGraph<
     this.graph.forEachNode(this.createNode.bind(this));
     this.graph.forEachEdge(this.createEdge.bind(this));
 
-    // todo
-    // when graph change(position change or add/delete new node)
-    // should mark related object dirty.
     // @ts-ignore
-    // (this.viewport.children as Container[]).map((layer) => this.cull.addList(layer.children));
+    (this.viewport.children as Container[]).map((layer) => this.cull.addList(layer.children));
   }
 
   private createNode(nodeKey: string, nodeAttributes: NodeAttributes) {
@@ -685,6 +696,8 @@ export class PixiGraph<
 
     const nodePosition = { x: nodeAttributes.x, y: nodeAttributes.y };
     node.updatePosition(nodePosition);
+    // @ts-ignore
+    this.cull.updateObject(node.nodeGfx);
 
     this.updateNodeStyle(nodeKey, nodeAttributes);
   }
@@ -826,6 +839,8 @@ export class PixiGraph<
       parallelEdgeCount,
       parallelSeq
     );
+    // @ts-ignore
+    this.cull.updateObject(edge.edgeGfx);
 
     edge.updateStyle(
       edgeStyle,
@@ -840,13 +855,13 @@ export class PixiGraph<
   private updateGraphVisibility() {
     // culling todo(rotation cull have bug)
     // https://github.com/davidfig/pixi-cull/issues/2
-    // this.cull.cull(this.viewport.getVisibleBounds(), false);
+    this.cull.cull(this.viewport.getVisibleBounds(), true);
     // should refer https://github.com/ShukantPal/pixi-essentials/tree/master/packages/cull
 
     // original culling have performance issue.
-    const cull = new Cull();
-    cull.addAll((this.viewport.children as Container[]).map((layer) => layer.children).flat());
-    cull.cull(this.app.renderer.screen);
+    // const cull = new Cull();
+    // cull.addAll((this.viewport.children as Container[]).map((layer) => layer.children).flat());
+    // cull.cull(this.app.renderer.screen);
 
     // console.log(
     //   Array.from((cull as any)._targetList as Set<DisplayObject>).filter(x => x.visible === true).length,
@@ -859,13 +874,15 @@ export class PixiGraph<
     const zoomStep = zoomSteps.findIndex((zoomStep) => zoom <= zoomStep);
     console.log(zoom, zoomStep);
 
+    //    edge (line) will always show
+
     // zoomStep = 0, zoom <= 0.1
     //    node background
     // zoomStep = 1,    0.1 < zoom <= 0.2
     //    node border
     // zoomStep = 2, 0.2 < zoom <= 0.4
     //    node icon
-    //    edge (line/parallel edge/self loop edge)
+    //    edge (parallel edge/self loop edge)
     // zoomStep = 3,  0.4 < zoom < Infinity
     //    node label
     //    edge arrow

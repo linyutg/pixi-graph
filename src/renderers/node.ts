@@ -61,18 +61,18 @@ export function updateNodeStyle(nodeGfx: Container, nodeStyle: NodeStyle, textur
   (nodeGfx.hitArea as Circle).radius = nodeOuterSize;
 
   // nodeGfx -> nodeCircle
-  const nodeCircle = nodeGfx.getChildByName!(NODE_CIRCLE) as Sprite;
+  const nodeCircle = nodeGfx.getChildByName!(NODE_CIRCLE) as unknown as Sprite;
   nodeCircle.texture = nodeCircleTexture;
   [nodeCircle.tint, nodeCircle.alpha] = colorToPixi(nodeStyle.color);
 
   // nodeGfx -> nodeCircleBorder
-  const nodeCircleBorder = nodeGfx.getChildByName!(NODE_CIRCLE_BORDER) as Sprite;
+  const nodeCircleBorder = nodeGfx.getChildByName!(NODE_CIRCLE_BORDER) as unknown as Sprite;
   nodeCircleBorder.texture = nodeCircleBorderTexture;
   [nodeCircleBorder.tint, nodeCircleBorder.alpha] = colorToPixi(nodeStyle.border.color);
 
   // nodeGfx -> nodeIcon
   if (nodeStyle.icon.url && nodeStyle.icon.width && nodeStyle.icon.height) {
-    const nodeIcon = nodeGfx.getChildByName!(NODE_ICON) as Sprite;
+    const nodeIcon = nodeGfx.getChildByName!(NODE_ICON) as unknown as Sprite;
     nodeIcon.texture = Texture.from(nodeStyle.icon.url);
     nodeIcon.width = nodeStyle.icon.width;
     nodeIcon.height = nodeStyle.icon.height;
@@ -82,11 +82,11 @@ export function updateNodeStyle(nodeGfx: Container, nodeStyle: NodeStyle, textur
 
 export function updateNodeVisibility(nodeGfx: Container, zoomStep: number) {
   // nodeGfx -> nodeCircleBorder
-  const nodeCircleBorder = nodeGfx.getChildByName!(NODE_CIRCLE_BORDER) as Sprite;
+  const nodeCircleBorder = nodeGfx.getChildByName!(NODE_CIRCLE_BORDER) as unknown as Sprite;
   nodeCircleBorder.visible = zoomStep >= 1;
 
   // nodeGfx -> nodeIcon
-  const nodeIcon = nodeGfx.getChildByName!(NODE_ICON) as Sprite;
+  const nodeIcon = nodeGfx.getChildByName!(NODE_ICON) as unknown as Sprite;
   if (nodeIcon) {
     nodeIcon.visible = zoomStep >= 2;
   }
