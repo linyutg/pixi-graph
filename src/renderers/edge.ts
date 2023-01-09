@@ -70,10 +70,10 @@ export function updatePosition(
   const [color, alpha] = colorToPixi(edgeStyle.color);
   const length = Math.hypot(targetNodePosition.x - sourceNodePosition.x, targetNodePosition.y - sourceNodePosition.y);
 
-  const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as Sprite;
-  const edgeArrow = edgeGfx.getChildByName!(EDGE_ARROW) as Sprite;
-  const edgeCurve = edgeGfx.getChildByName!(EDGE_CURVE) as Graphics;
-  const edgeCurveArrow = edgeGfx.getChildByName!(EDGE_CURVE_ARROW) as Graphics;
+  const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as unknown as Sprite;
+  const edgeArrow = edgeGfx.getChildByName!(EDGE_ARROW) as unknown as Sprite;
+  const edgeCurve = edgeGfx.getChildByName!(EDGE_CURVE) as unknown as Graphics;
+  const edgeCurveArrow = edgeGfx.getChildByName!(EDGE_CURVE_ARROW) as unknown as Graphics;
 
   edgeLine.visible = false;
   edgeArrow.visible = false;
@@ -194,7 +194,7 @@ export function updateEdgeStyle(
   }
   if (parallelEdgeCount <= 1 || (parallelEdgeCount % 2 === 1 && parallelSeq === parallelEdgeCount)) {
     // edgeGfx -> edgeLine
-    const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as Sprite;
+    const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as unknown as Sprite;
     edgeLine.height = edgeStyle.width;
     [edgeLine.tint, edgeLine.alpha] = colorToPixi(edgeStyle.color);
   }
@@ -207,14 +207,14 @@ export function updateEdgeVisibility(
   parallelEdgeCount: number,
   parallelSeq: number
 ) {
-  const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as Sprite;
-  const edgeArrow = edgeGfx.getChildByName!(EDGE_ARROW) as Sprite;
-  const edgeCurve = edgeGfx.getChildByName!(EDGE_CURVE) as Graphics;
-  const edgeCurveArrow = edgeGfx.getChildByName!(EDGE_CURVE_ARROW) as Graphics;
+  const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as unknown as Sprite;
+  const edgeArrow = edgeGfx.getChildByName!(EDGE_ARROW) as unknown as Sprite;
+  const edgeCurve = edgeGfx.getChildByName!(EDGE_CURVE) as unknown as Graphics;
+  const edgeCurveArrow = edgeGfx.getChildByName!(EDGE_CURVE_ARROW) as unknown as Graphics;
 
   if (isSelfLoop) {
     // edgeGfx -> edgeCurve
-    edgeCurve.visible = zoomStep >= 2;
+    edgeCurve.visible = zoomStep >= 3;
     // edgeGfx -> edgeCurveArrow
     edgeCurveArrow.visible = zoomStep >= 3;
 
@@ -226,7 +226,10 @@ export function updateEdgeVisibility(
 
   if (parallelEdgeCount <= 1 || (parallelEdgeCount % 2 === 1 && parallelSeq === parallelEdgeCount)) {
     // edgeGfx -> edgeLine
-    edgeLine.visible = zoomStep >= 2;
+    // edgeLine.visible = zoomStep >= 1;
+    // todo(lin): we may need display line all the time.
+    edgeLine.visible = true;
+
     // edgeGFX -> edgeArrow
     edgeArrow.visible = zoomStep >= 3;
 
@@ -235,7 +238,7 @@ export function updateEdgeVisibility(
     edgeCurveArrow.visible = false;
   } else {
     // edgeGfx -> edgeCurve
-    edgeCurve.visible = zoomStep >= 2;
+    edgeCurve.visible = zoomStep >= 3;
     // edgeGfx -> edgeCurveArrow
     edgeCurveArrow.visible = zoomStep >= 3;
 

@@ -35,7 +35,7 @@ export function updateNodeLabelStyle(nodeLabelGfx: Container, nodeStyle: NodeSty
   });
 
   // nodeLabelGfx -> nodeLabelText
-  const nodeLabelText = nodeLabelGfx.getChildByName!(NODE_LABEL_TEXT) as Sprite;
+  const nodeLabelText = nodeLabelGfx.getChildByName!(NODE_LABEL_TEXT) as unknown as Sprite;
   nodeLabelText.texture = nodeLabelTextTexture;
   nodeLabelText.y = nodeStyle.size + (nodeLabelTextTexture.height + nodeStyle.label.padding * 2) / 2;
   [nodeLabelText.tint, nodeLabelText.alpha] = colorToPixi(nodeStyle.label.color);
@@ -43,6 +43,6 @@ export function updateNodeLabelStyle(nodeLabelGfx: Container, nodeStyle: NodeSty
 
 export function updateNodeLabelVisibility(nodeLabelGfx: Container, zoomStep: number) {
   // nodeLabelGfx -> nodeLabelText
-  const nodeLabelText = nodeLabelGfx.getChildByName!(NODE_LABEL_TEXT) as BitmapText;
+  const nodeLabelText = nodeLabelGfx.getChildByName!(NODE_LABEL_TEXT) as unknown as BitmapText;
   nodeLabelText.visible = zoomStep >= 3;
 }
