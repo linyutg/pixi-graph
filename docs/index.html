@@ -75,13 +75,14 @@
       window.addEventListener('DOMContentLoaded', async () => {
         console.time('requestData');
         const graph = new graphology.Graph({ multi: true, allowSelfLoops: true, type: 'mixed' });
-        const { nodes, links } = await (await fetch('miserables.json')).json();
+        // const { nodes, links } = await (await fetch('miserables.json')).json();
         // const { nodes, links } = await (await fetch('socfb-Caltech36.json')).json();
         // const { nodes, links } = await (await fetch('facebook.json')).json();
+        const { nodes, links } = await (await fetch('benchmark1.json')).json();
         console.timeEnd('requestData');
         console.log(`nodes: ${nodes.length}, edges: ${links.length}`);
         nodes.forEach((node) => {
-          graph.addNode(`${node.id}`, node);
+          graph.mergeNode(`${node.id}`, node);
         });
         links.forEach((link) => {
           graph.addEdge(`${link.source}`, `${link.target}`, link);
@@ -92,17 +93,17 @@
           graph.setNodeAttribute(node, 'x', Math.random());
           graph.setNodeAttribute(node, 'y', Math.random());
         });
-        // console.time('layout');
-        // forceAtlas2.assign(graph, {
-        //   iterations: 300,
-        //   settings: {
-        //     ...forceAtlas2.inferSettings(graph),
-        //     scalingRatio: 500,
-        //     barnesHutOptimize: true,
-        //     // gravity: 0.7,
-        //   },
-        // });
-        // console.timeEnd('layout');
+        console.time('layout');
+        forceAtlas2.assign(graph, {
+          iterations: 300,
+          settings: {
+            ...forceAtlas2.inferSettings(graph),
+            scalingRatio: 500,
+            barnesHutOptimize: true,
+            gravity: 0.7,
+          },
+        });
+        console.timeEnd('layout');
         // const positions = await (await fetch('miserables-positions.json')).json();
         // graph.forEachNode((node) => {
         //   const position = positions[node];
@@ -206,11 +207,14 @@
             // dagre
 
             // forceAtlas2
-            kr: 200,
+            kr: 10,
+            prune: false,
 
             // gForce
-
             // gForce-gpu
+            nodeSpacing: 60,
+            nodeStrength: 10000,
+            // edgeStrength: 1000,
           },
           style,
           hoverStyle,

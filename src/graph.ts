@@ -390,10 +390,14 @@ export class PixiGraph<
       });
     });
 
-    const layoutResult = this.layout.layout({
-      nodes,
-      edges,
-    });
+    // const layoutResult = this.layout.layout({
+    //   nodes,
+    //   edges,
+    // });
+
+    const layoutResult = {
+      nodes: [],
+    };
 
     let positionedNodes: OutNode[] = [];
     // some Layout(mainly force layout) will not return results
