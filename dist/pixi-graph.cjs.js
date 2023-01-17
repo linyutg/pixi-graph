@@ -17,6 +17,7 @@ var tinyTypedEmitter = require('tiny-typed-emitter');
 var graphicsSmooth = require('@pixi/graphics-smooth');
 var layout = require('@antv/layout');
 var FA2Layout = require('graphology-layout-forceatlas2/worker');
+var graphologyLayoutForceatlas2 = require('graphology-layout-forceatlas2');
 var deepmerge = require('deepmerge');
 var constants = require('@pixi/constants');
 var sprite = require('@pixi/sprite');
@@ -94,6 +95,17 @@ function __extends(d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 }
 
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
 // the ForceAtlas2Layout from @antv/layout is slow
 var ForceAtlas2Layout = /** @class */ (function () {
     function ForceAtlas2Layout(options) {
@@ -101,7 +113,7 @@ var ForceAtlas2Layout = /** @class */ (function () {
     }
     ForceAtlas2Layout.prototype.runLayout = function (graph) {
         var layout = new FA2Layout__default['default'](graph, {
-            settings: this.options,
+            settings: __assign(__assign({}, graphologyLayoutForceatlas2.inferSettings(graph)), this.options),
         });
         // To start the layout
         layout.start();

@@ -4,6 +4,7 @@
 import Graph from 'graphology-types';
 import { ForceAtlas2Settings } from 'graphology-layout-forceatlas2';
 import FA2Layout from 'graphology-layout-forceatlas2/worker';
+import { inferSettings } from 'graphology-layout-forceatlas2';
 
 export type ForceAtlas2LayoutOptions = ForceAtlas2Settings & {
   type: 'forceatlas2';
@@ -20,7 +21,10 @@ export class ForceAtlas2Layout {
 
   public runLayout(graph: Graph) {
     const layout = new FA2Layout(graph, {
-      settings: this.options,
+      settings: {
+        ...inferSettings(graph),
+        ...this.options,
+      },
     });
 
     // To start the layout
