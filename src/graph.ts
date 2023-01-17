@@ -400,6 +400,15 @@ export class PixiGraph<
 
     let positionedNodes = (layoutResult as OutModel).nodes!;
 
+    let i = 0;
+    // assume the order is the same between layout and graph
+    this.graph.updateEachNodeAttributes(function (_node, attr) {
+      attr.x = positionedNodes[i].x;
+      attr.y = positionedNodes[i].y;
+      i++;
+      return attr;
+    });
+
     for (let node of positionedNodes) {
       this.graph.setNodeAttribute(node.id, 'x', node.x);
       this.graph.setNodeAttribute(node.id, 'y', node.y);
