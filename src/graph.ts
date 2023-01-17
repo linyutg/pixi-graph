@@ -528,7 +528,7 @@ export class PixiGraph<
       });
     });
     this.graph.forEachNode(this.updateNodeStyle.bind(this));
-    // this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
+    this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
   }
 
   private onGraphEachEdgeAttributesUpdated() {

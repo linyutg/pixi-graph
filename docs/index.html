@@ -77,8 +77,8 @@
         const graph = new graphology.Graph({ multi: true, allowSelfLoops: true, type: 'mixed' });
         // const { nodes, links } = await (await fetch('miserables.json')).json();
         // const { nodes, links } = await (await fetch('socfb-Caltech36.json')).json();
-        const { nodes, links } = await (await fetch('facebook.json')).json();
-        // const { nodes, links } = await (await fetch('benchmark1.json')).json();
+        // const { nodes, links } = await (await fetch('facebook.json')).json();
+        const { nodes, links } = await (await fetch('benchmark1.json')).json();
         console.timeEnd('requestData');
         console.log(`nodes: ${nodes.length}, edges: ${links.length}`);
         nodes.forEach((node) => {

@@ -1161,7 +1161,7 @@ var PixiGraph = /** @class */ (function (_super) {
             });
         });
         this.graph.forEachNode(this.updateNodeStyle.bind(this));
-        // this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
+        this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
     };
     PixiGraph.prototype.onGraphEachEdgeAttributesUpdated = function () {
         this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
