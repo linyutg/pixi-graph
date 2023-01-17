@@ -1072,11 +1072,6 @@ var PixiGraph = /** @class */ (function (_super) {
             i++;
             return attr;
         });
-        for (var _i = 0, positionedNodes_1 = positionedNodes; _i < positionedNodes_1.length; _i++) {
-            var node = positionedNodes_1[_i];
-            this.graph.setNodeAttribute(node.id, 'x', node.x);
-            this.graph.setNodeAttribute(node.id, 'y', node.y);
-        }
         console.timeEnd(this.layoutConfig.type);
     };
     Object.defineProperty(PixiGraph.prototype, "zoomStep", {

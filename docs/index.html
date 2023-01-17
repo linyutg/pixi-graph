@@ -73,10 +73,10 @@
       window.addEventListener('DOMContentLoaded', async () => {
         console.time('requestData');
         const graph = new graphology.Graph({ multi: true, allowSelfLoops: true, type: 'mixed' });
-        // const { nodes, links } = await (await fetch('miserables.json')).json();
+        const { nodes, links } = await (await fetch('miserables.json')).json();
         // const { nodes, links } = await (await fetch('socfb-Caltech36.json')).json();
         // const { nodes, links } = await (await fetch('facebook.json')).json();
-        const { nodes, links } = await (await fetch('benchmark1.json')).json();
+        // const { nodes, links } = await (await fetch('benchmark1.json')).json();
         console.timeEnd('requestData');
         console.log(`nodes: ${nodes.length}, edges: ${links.length}`);
         nodes.forEach((node) => {
@@ -186,6 +186,14 @@
           selectStyle,
           resources,
         });
+
+        setTimeout(() => {
+          pixiGraph.updateLayout({
+            type: 'circular',
+            radius: 1000,
+          });
+        }, 2000);
+
         pixiGraph.on('rightClick', (event) => console.log('rightClick', event));
         pixiGraph.on('nodeClick', (event, nodeKey) => console.log('nodeClick', event, nodeKey));
         // pixiGraph.on('nodeDoubleClick', (event, nodeKey) => console.log('nodeDoubleClick', event, nodeKey));

@@ -402,17 +402,13 @@ export class PixiGraph<
 
     let i = 0;
     // assume the order is the same between layout and graph
+    // batch update graph position
     this.graph.updateEachNodeAttributes(function (_node, attr) {
       attr.x = positionedNodes[i].x;
       attr.y = positionedNodes[i].y;
       i++;
       return attr;
     });
-
-    for (let node of positionedNodes) {
-      this.graph.setNodeAttribute(node.id, 'x', node.x);
-      this.graph.setNodeAttribute(node.id, 'y', node.y);
-    }
     console.timeEnd(this.layoutConfig.type);
   }
 
