@@ -15,20 +15,9 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 import { LINE_SCALE_MODE, settings } from '@pixi/graphics-smooth';
 
 import { Base } from '@antv/layout/lib/layout/base';
-import {
-  GridLayout,
-  CircularLayout,
-  ConcentricLayout,
-  DagreLayout,
-  GForceLayout,
-  GForceGPULayout,
-  ForceAtlas2Layout,
-  ILayout,
-  OutModel,
-  OutNode,
-  Node,
-  Edge,
-} from '@antv/layout';
+import { GridLayout, CircularLayout, ConcentricLayout, DagreLayout, ILayout, OutModel, Node, Edge } from '@antv/layout';
+import { ForceAtlas2Layout, ForceAtlas2LayoutOptions } from './layouts/ForceAtlas2Layout';
+import { ColaLayout, ColaLayoutOptions } from './layouts/ColaLayout';
 
 import { GraphStyleDefinition, NodeStyleDefinition, resolveStyleDefinitions } from './utils/style';
 import { TextType } from './utils/text';
@@ -69,6 +58,8 @@ const DEFAULT_STYLE: GraphStyleDefinition = {
 
 const WORLD_PADDING = 100;
 
+type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions | ColaLayoutOptions;
+
 export interface GraphOptions<
   NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes,
   EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes
@@ -76,7 +67,7 @@ export interface GraphOptions<
   container: HTMLElement;
   graph: AbstractGraph<NodeAttributes, EdgeAttributes>;
   // detailed configuration see https://g6.antv.antgroup.com/api/graphlayout/guide
-  layout: ILayout.LayoutOptions;
+  layout: LayoutOptions;
   style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -112,9 +103,15 @@ export class PixiGraph<
 > extends TypedEmitter<PixiGraphEvents> {
   container: HTMLElement;
   graph: AbstractGraph<NodeAttributes, EdgeAttributes>;
-  layoutConfig: ILayout.LayoutOptions;
+  layoutConfig: LayoutOptions;
   // @ts-ignore
   layout: Base;
+  // @ts-ignore
+  forceAtlas2Layout: ForceAtlas2Layout;
+  iterationNum = 0;
+  iterations = 0;
+  // @ts-ignore
+  colaLayout: ColaLayout;
   style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -170,7 +167,7 @@ export class PixiGraph<
 
     // do layout
     this.createLayout();
-    this.doLayout(true);
+    this.doLayout();
 
     if (!(this.container instanceof HTMLElement)) {
       throw new Error('container should be a HTMLElement');
@@ -345,25 +342,23 @@ export class PixiGraph<
         this.layout = new DagreLayout(this.layoutConfig);
         break;
 
-      case 'forceAtlas2':
-        this.layout = new ForceAtlas2Layout(this.layoutConfig);
+      case 'forceatlas2':
+        this.forceAtlas2Layout = new ForceAtlas2Layout(this.layoutConfig);
         break;
 
-      case 'gForce':
-        this.layout = new GForceLayout(this.layoutConfig);
-        break;
-
-      case 'gForce-gpu':
-        this.layout = new GForceGPULayout(this.layoutConfig);
+      case 'cola':
+        this.colaLayout = new ColaLayout(this.layoutConfig);
         break;
 
       default:
-        break;
+        throw new Error(`unsupported layout: ${this.layoutConfig.type}`);
     }
   }
 
   public updateLayout(layoutConfig: ILayout.LayoutOptions) {
     this.layoutConfig = layoutConfig;
+
+    // create layout object if needed
     if (this.layoutConfig.type !== layoutConfig.type) {
       this.createLayout();
     }
@@ -371,10 +366,26 @@ export class PixiGraph<
     this.doLayout();
   }
 
-  // 1. convert from Graphology graph to layout graph
-  // 2. run layout
-  // 3. update Graphology graph based on layout result
-  public doLayout(_skipRender?: boolean) {
+  private isForceLayout() {
+    return this.layoutConfig.type === 'forceatlas2' || this.layoutConfig.type === 'cola';
+  }
+
+  private doForceLayout() {
+    if (this.layoutConfig.type === 'forceatlas2') {
+      // need to wait web worker layout failed
+      this.iterationNum = 0;
+      this.forceAtlas2Layout.runLayout(this.graph);
+    } else if (this.layoutConfig.type === 'cola') {
+      this.colaLayout.runLayout(this.graph);
+    }
+  }
+
+  public doLayout() {
+    if (this.isForceLayout()) {
+      this.doForceLayout();
+      return;
+    }
+
     console.time(`${this.layoutConfig.type} layout`);
     let nodes: Node[] = [];
     let edges: Edge[] = [];
@@ -390,22 +401,12 @@ export class PixiGraph<
       });
     });
 
-    // const layoutResult = this.layout.layout({
-    //   nodes,
-    //   edges,
-    // });
+    const layoutResult = this.layout.layout({
+      nodes,
+      edges,
+    });
 
-    const layoutResult = {
-      nodes: [],
-    };
-
-    let positionedNodes: OutNode[] = [];
-    // some Layout(mainly force layout) will not return results
-    if (layoutResult && layoutResult.nodes) {
-      positionedNodes = (layoutResult as OutModel).nodes!;
-    } else {
-      positionedNodes = this.layout.nodes as OutNode[];
-    }
+    let positionedNodes = (layoutResult as OutModel).nodes!;
 
     for (let node of positionedNodes) {
       this.graph.setNodeAttribute(node.id, 'x', node.x);
@@ -513,7 +514,26 @@ export class PixiGraph<
   }
 
   private onGraphEachNodeAttributesUpdated() {
+    if (this.layoutConfig.type === 'forceatlas2') {
+      this.iterationNum++;
+      if (this.iterationNum === 1) {
+        this.resetView();
+      }
+      if (this.iterationNum >= this.layoutConfig.iterations) {
+        this.forceAtlas2Layout.stopLayout();
+      }
+    }
+
+    this.graph.forEachNode((nodeKey: string, nodeAttributes: NodeAttributes) => {
+      // console.log(nodeKey, nodeAttributes.x, nodeAttributes.y);
+      const node = this.nodeKeyToNodeObject.get(nodeKey)!;
+      node.updatePosition({
+        x: nodeAttributes.x,
+        y: nodeAttributes.y,
+      });
+    });
     this.graph.forEachNode(this.updateNodeStyle.bind(this));
+    this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
   }
 
   private onGraphEachEdgeAttributesUpdated() {

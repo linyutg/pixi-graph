@@ -44,6 +44,7 @@
     "color-rgba": "^2.2.3",
     "deepmerge": "^4.2.2",
     "events": "^3.3.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
     "pixi-cull": "^2.2.0",
     "pixi-viewport": "^4.30.4",
     "prettier": "^2.8.0",
