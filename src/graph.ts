@@ -514,6 +514,8 @@ export class PixiGraph<
   }
 
   private onGraphEachNodeAttributesUpdated() {
+    // todo(lin)
+    // for force layout, seems the pixi-viewport and cull is not triggerd
     if (this.layoutConfig.type === 'forceatlas2') {
       this.iterationNum++;
       if (this.iterationNum === 1) {
