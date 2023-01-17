@@ -348,10 +348,11 @@ export class PixiGraph<
   }
 
   public updateLayout(layoutConfig: ILayout.LayoutOptions) {
+    let originLayoutConfig = this.layoutConfig;
     this.layoutConfig = layoutConfig;
 
     // create layout object if needed
-    if (this.layoutConfig.type !== layoutConfig.type) {
+    if (this.layoutConfig.type !== originLayoutConfig.type) {
       this.createLayout();
     }
     // do layout based on new config
