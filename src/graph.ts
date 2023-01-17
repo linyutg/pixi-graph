@@ -368,7 +368,7 @@ export class PixiGraph<
     if (this.layoutConfig.type === 'forceatlas2') {
       // need to wait web worker layout failed
       this.iterationNum = 0;
-      this.forceAtlas2Layout.runLayout(this.graph);
+      this.forceAtlas2Layout.runLayout(this.graph, true);
     }
   }
 

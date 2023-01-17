@@ -78,7 +78,7 @@ declare class ForceAtlas2Layout {
     options: ForceAtlas2LayoutOptions;
     layout?: FA2Layout;
     constructor(options: ForceAtlas2LayoutOptions);
-    runLayout(graph: Graph): void;
+    runLayout(graph: Graph, random?: boolean): void;
     stopLayout(): void;
     isRunning(): boolean | undefined;
     kill(): void;

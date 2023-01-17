@@ -111,7 +111,13 @@ var ForceAtlas2Layout = /** @class */ (function () {
     function ForceAtlas2Layout(options) {
         this.options = options;
     }
-    ForceAtlas2Layout.prototype.runLayout = function (graph) {
+    ForceAtlas2Layout.prototype.runLayout = function (graph, random) {
+        if (random) {
+            graph.forEachNode(function (node) {
+                graph.setNodeAttribute(node, 'x', Math.random());
+                graph.setNodeAttribute(node, 'y', Math.random());
+            });
+        }
         var layout = new FA2Layout__default['default'](graph, {
             settings: __assign(__assign({}, graphologyLayoutForceatlas2.inferSettings(graph)), this.options),
         });
@@ -1041,7 +1047,7 @@ var PixiGraph = /** @class */ (function (_super) {
         if (this.layoutConfig.type === 'forceatlas2') {
             // need to wait web worker layout failed
             this.iterationNum = 0;
-            this.forceAtlas2Layout.runLayout(this.graph);
+            this.forceAtlas2Layout.runLayout(this.graph, true);
         }
     };
     PixiGraph.prototype.doLayout = function () {

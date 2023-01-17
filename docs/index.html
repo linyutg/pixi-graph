@@ -86,11 +86,6 @@
           graph.addEdge(`${link.source}`, `${link.target}`, link);
         });
 
-        // layout
-        graph.forEachNode((node) => {
-          graph.setNodeAttribute(node, 'x', Math.random());
-          graph.setNodeAttribute(node, 'y', Math.random());
-        });
         const style = {
           node: {
             size: 30,

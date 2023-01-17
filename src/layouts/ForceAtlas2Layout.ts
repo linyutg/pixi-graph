@@ -19,7 +19,14 @@ export class ForceAtlas2Layout {
     this.options = options;
   }
 
-  public runLayout(graph: Graph) {
+  public runLayout(graph: Graph, random?: boolean) {
+    if (random) {
+      graph.forEachNode((node) => {
+        graph.setNodeAttribute(node, 'x', Math.random());
+        graph.setNodeAttribute(node, 'y', Math.random());
+      });
+    }
+
     const layout = new FA2Layout(graph, {
       settings: {
         ...inferSettings(graph),
