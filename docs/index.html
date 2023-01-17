@@ -73,10 +73,10 @@
       window.addEventListener('DOMContentLoaded', async () => {
         console.time('requestData');
         const graph = new graphology.Graph({ multi: true, allowSelfLoops: true, type: 'mixed' });
-        // const { nodes, links } = await (await fetch('miserables.json')).json();
+        const { nodes, links } = await (await fetch('miserables.json')).json();
         // const { nodes, links } = await (await fetch('socfb-Caltech36.json')).json();
         // const { nodes, links } = await (await fetch('facebook.json')).json();
-        const { nodes, links } = await (await fetch('benchmark1.json')).json();
+        // const { nodes, links } = await (await fetch('benchmark1.json')).json();
         console.timeEnd('requestData');
         console.log(`nodes: ${nodes.length}, edges: ${links.length}`);
         nodes.forEach((node) => {
@@ -101,8 +101,7 @@
             },
             label: {
               content: (node) => `${node.id}`,
-              type: PixiGraph.TextType.BITMAP_TEXT,
-              fontFamily: 'HelveticaRegular',
+              type: PixiGraph.TextType.TEXT,
               fontSize: 12,
               color: '#333333',
               padding: 4,
@@ -113,8 +112,7 @@
             color: '#ff0000',
             label: {
               content: (edge) => `label`,
-              type: PixiGraph.TextType.BITMAP_TEXT,
-              fontFamily: 'HelveticaRegular',
+              type: PixiGraph.TextType.TEXT,
               fontSize: 12,
               color: '#333333',
               padding: 4,
@@ -145,10 +143,6 @@
         };
 
         const resources = [
-          {
-            name: 'HelveticaRegular',
-            url: 'https://gist.githubusercontent.com/zakjan/b61c0a26d297edf0c09a066712680f37/raw/8cdda3c21ba3668c3dd022efac6d7f740c9f1e18/HelveticaRegular.fnt',
-          },
           {
             name: 'icon.png',
             url: 'icon.png',

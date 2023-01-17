@@ -30,16 +30,16 @@ var TextType;
     // TODO: SDF_TEXT
     // see https://github.com/PixelsCommander/pixi-sdf-text/issues/12
 })(TextType || (TextType = {}));
-// for antialias: BITMAP_TEXT is much better than TEXT
 function textToPixi(type, content, style) {
     var text;
     if (type === TextType.TEXT) {
-        // TODO: convert to bitmap font with BitmapFont.from?
         text = new Text(content, {
-            fontFamily: style.fontFamily,
+            // fontFamily: style.fontFamily,
             fontSize: style.fontSize,
             fill: WHITE$2,
         });
+        // high resolution so better AA.
+        text.resolution = 8;
     }
     else if (type === TextType.BITMAP_TEXT) {
         text = new BitmapText(content, {
@@ -818,7 +818,6 @@ var DEFAULT_STYLE = {
         icon: {},
         label: {
             type: TextType.TEXT,
-            fontFamily: 'Arial',
             fontSize: 12,
             content: '',
             color: '#333333',

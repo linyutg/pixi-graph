@@ -16,16 +16,16 @@ export interface TextStyle {
   fontSize: number;
 }
 
-// for antialias: BITMAP_TEXT is much better than TEXT
 export function textToPixi(type: TextType, content: string, style: TextStyle) {
   let text;
   if (type === TextType.TEXT) {
-    // TODO: convert to bitmap font with BitmapFont.from?
     text = new Text(content, {
-      fontFamily: style.fontFamily,
+      // fontFamily: style.fontFamily,
       fontSize: style.fontSize,
       fill: WHITE,
     });
+    // high resolution so better AA.
+    text.resolution = 8;
   } else if (type === TextType.BITMAP_TEXT) {
     text = new BitmapText(content, {
       fontName: style.fontFamily,
