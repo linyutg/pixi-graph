@@ -1,7 +1,11 @@
-import { Attributes, AbstractGraph } from 'graphology-types';
+import Graph, { Attributes, AbstractGraph } from 'graphology-types';
 import { Rectangle } from '@pixi/math';
 import { IAddOptions } from '@pixi/loaders';
 import { TypedEmitter } from 'tiny-typed-emitter';
+import { Base } from '@antv/layout/lib/layout/base';
+import { ILayout } from '@antv/layout';
+import { ForceAtlas2Settings } from 'graphology-layout-forceatlas2';
+import FA2Layout from 'graphology-layout-forceatlas2/worker';
 
 declare enum TextType {
     TEXT = "TEXT",
@@ -12,12 +16,12 @@ interface TextStyle {
     fontSize: number;
 }
 
-type BaseAttributes = Attributes;
-type BaseNodeAttributes = BaseAttributes & {
+declare type BaseAttributes = Attributes;
+declare type BaseNodeAttributes = BaseAttributes & {
     x: number;
     y: number;
 };
-type BaseEdgeAttributes = BaseAttributes;
+declare type BaseEdgeAttributes = BaseAttributes;
 
 interface GraphStyle {
     node: {
@@ -54,21 +58,37 @@ interface GraphStyle {
         };
     };
 }
-type NodeStyle = GraphStyle['node'];
-type EdgeStyle = GraphStyle['edge'];
-type StyleDefinition<Style, Attributes> = ((attributes: Attributes) => Style) | {
+declare type NodeStyle = GraphStyle['node'];
+declare type EdgeStyle = GraphStyle['edge'];
+declare type StyleDefinition<Style, Attributes> = ((attributes: Attributes) => Style) | {
     [Key in keyof Style]?: StyleDefinition<Style[Key], Attributes>;
 } | Style;
-type NodeStyleDefinition<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes> = StyleDefinition<NodeStyle, NodeAttributes>;
-type EdgeStyleDefinition<EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> = StyleDefinition<EdgeStyle, EdgeAttributes>;
+declare type NodeStyleDefinition<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes> = StyleDefinition<NodeStyle, NodeAttributes>;
+declare type EdgeStyleDefinition<EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> = StyleDefinition<EdgeStyle, EdgeAttributes>;
 interface GraphStyleDefinition<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes, EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> {
     node?: NodeStyleDefinition<NodeAttributes>;
     edge?: EdgeStyleDefinition<EdgeAttributes>;
 }
 
+declare type ForceAtlas2LayoutOptions = ForceAtlas2Settings & {
+    type: 'forceatlas2';
+    iterations: number;
+};
+declare class ForceAtlas2Layout {
+    options: ForceAtlas2LayoutOptions;
+    layout?: FA2Layout;
+    constructor(options: ForceAtlas2LayoutOptions);
+    runLayout(graph: Graph): void;
+    stopLayout(): void;
+    isRunning(): boolean | undefined;
+    kill(): void;
+}
+
+declare type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions;
 interface GraphOptions<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes, EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> {
     container: HTMLElement;
     graph: AbstractGraph<NodeAttributes, EdgeAttributes>;
+    layout: LayoutOptions;
     style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -94,6 +114,11 @@ interface PixiGraphEvents {
 declare class PixiGraph<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes, EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> extends TypedEmitter<PixiGraphEvents> {
     container: HTMLElement;
     graph: AbstractGraph<NodeAttributes, EdgeAttributes>;
+    layoutConfig: LayoutOptions;
+    layout: Base;
+    forceAtlas2Layout: ForceAtlas2Layout;
+    iterationNum: number;
+    iterations: number;
     style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -131,6 +156,11 @@ declare class PixiGraph<NodeAttributes extends BaseNodeAttributes = BaseNodeAttr
     private onDocumentMouseUpBound;
     constructor(options: GraphOptions<NodeAttributes, EdgeAttributes>);
     destroy(): void;
+    private createLayout;
+    updateLayout(layoutConfig: ILayout.LayoutOptions): void;
+    private isForceLayout;
+    private doForceLayout;
+    doLayout(): void;
     private get zoomStep();
     zoomIn(): void;
     zoomOut(): void;

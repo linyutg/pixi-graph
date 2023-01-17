@@ -17,7 +17,6 @@ import { LINE_SCALE_MODE, settings } from '@pixi/graphics-smooth';
 import { Base } from '@antv/layout/lib/layout/base';
 import { GridLayout, CircularLayout, ConcentricLayout, DagreLayout, ILayout, OutModel, Node, Edge } from '@antv/layout';
 import { ForceAtlas2Layout, ForceAtlas2LayoutOptions } from './layouts/ForceAtlas2Layout';
-import { ColaLayout, ColaLayoutOptions } from './layouts/ColaLayout';
 
 import { GraphStyleDefinition, NodeStyleDefinition, resolveStyleDefinitions } from './utils/style';
 import { TextType } from './utils/text';
@@ -58,7 +57,7 @@ const DEFAULT_STYLE: GraphStyleDefinition = {
 
 const WORLD_PADDING = 100;
 
-type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions | ColaLayoutOptions;
+type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions;
 
 export interface GraphOptions<
   NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes,
@@ -110,8 +109,6 @@ export class PixiGraph<
   forceAtlas2Layout: ForceAtlas2Layout;
   iterationNum = 0;
   iterations = 0;
-  // @ts-ignore
-  colaLayout: ColaLayout;
   style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -346,10 +343,6 @@ export class PixiGraph<
         this.forceAtlas2Layout = new ForceAtlas2Layout(this.layoutConfig);
         break;
 
-      case 'cola':
-        this.colaLayout = new ColaLayout(this.layoutConfig);
-        break;
-
       default:
         throw new Error(`unsupported layout: ${this.layoutConfig.type}`);
     }
@@ -367,16 +360,15 @@ export class PixiGraph<
   }
 
   private isForceLayout() {
-    return this.layoutConfig.type === 'forceatlas2' || this.layoutConfig.type === 'cola';
+    return this.layoutConfig.type === 'forceatlas2';
   }
 
   private doForceLayout() {
+    console.time(this.layoutConfig.type);
     if (this.layoutConfig.type === 'forceatlas2') {
       // need to wait web worker layout failed
       this.iterationNum = 0;
       this.forceAtlas2Layout.runLayout(this.graph);
-    } else if (this.layoutConfig.type === 'cola') {
-      this.colaLayout.runLayout(this.graph);
     }
   }
 
@@ -386,7 +378,7 @@ export class PixiGraph<
       return;
     }
 
-    console.time(`${this.layoutConfig.type} layout`);
+    console.time(this.layoutConfig.type);
     let nodes: Node[] = [];
     let edges: Edge[] = [];
     this.graph.forEachNode((nodeKey) =>
@@ -412,7 +404,7 @@ export class PixiGraph<
       this.graph.setNodeAttribute(node.id, 'x', node.x);
       this.graph.setNodeAttribute(node.id, 'y', node.y);
     }
-    console.timeEnd(`${this.layoutConfig.type} layout`);
+    console.timeEnd(this.layoutConfig.type);
   }
 
   private get zoomStep() {
@@ -523,6 +515,7 @@ export class PixiGraph<
       }
       if (this.iterationNum >= this.layoutConfig.iterations) {
         this.forceAtlas2Layout.stopLayout();
+        console.timeEnd(this.layoutConfig.type);
       }
     }
 
@@ -535,7 +528,7 @@ export class PixiGraph<
       });
     });
     this.graph.forEachNode(this.updateNodeStyle.bind(this));
-    this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
+    // this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
   }
 
   private onGraphEachEdgeAttributesUpdated() {

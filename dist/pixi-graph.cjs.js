@@ -14,10 +14,12 @@ var math = require('@pixi/math');
 var pixiViewport = require('pixi-viewport');
 var cull = require('@pixi-essentials/cull');
 var tinyTypedEmitter = require('tiny-typed-emitter');
+var graphicsSmooth = require('@pixi/graphics-smooth');
+var layout = require('@antv/layout');
+var FA2Layout = require('graphology-layout-forceatlas2/worker');
 var deepmerge = require('deepmerge');
 var constants = require('@pixi/constants');
 var sprite = require('@pixi/sprite');
-var graphicsSmooth = require('@pixi/graphics-smooth');
 require('@pixi/mixin-get-child-by-name');
 var utils = require('@pixi/utils');
 var rgba = require('color-rgba');
@@ -25,6 +27,7 @@ var graphics = require('@pixi/graphics');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
+var FA2Layout__default = /*#__PURE__*/_interopDefaultLegacy(FA2Layout);
 var deepmerge__default = /*#__PURE__*/_interopDefaultLegacy(deepmerge);
 var rgba__default = /*#__PURE__*/_interopDefaultLegacy(rgba);
 
@@ -91,6 +94,34 @@ function __extends(d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 }
 
+// the ForceAtlas2Layout from @antv/layout is slow
+var ForceAtlas2Layout = /** @class */ (function () {
+    function ForceAtlas2Layout(options) {
+        this.options = options;
+    }
+    ForceAtlas2Layout.prototype.runLayout = function (graph) {
+        var layout = new FA2Layout__default['default'](graph, {
+            settings: this.options,
+        });
+        // To start the layout
+        layout.start();
+        this.layout = layout;
+    };
+    ForceAtlas2Layout.prototype.stopLayout = function () {
+        var _a;
+        (_a = this.layout) === null || _a === void 0 ? void 0 : _a.stop();
+    };
+    ForceAtlas2Layout.prototype.isRunning = function () {
+        var _a;
+        return (_a = this.layout) === null || _a === void 0 ? void 0 : _a.isRunning();
+    };
+    ForceAtlas2Layout.prototype.kill = function () {
+        var _a;
+        (_a = this.layout) === null || _a === void 0 ? void 0 : _a.kill();
+    };
+    return ForceAtlas2Layout;
+}());
+
 function resolveStyleDefinition(styleDefinition, attributes) {
     var style;
     if (styleDefinition instanceof Function) {
@@ -111,7 +142,7 @@ function resolveStyleDefinitions(styleDefinitions, attributes) {
     var styles = styleDefinitions
         .filter(function (x) { return !!x; })
         .map(function (styleDefinition) { return resolveStyleDefinition(styleDefinition, attributes); });
-    var style = deepmerge__default["default"].all(styles);
+    var style = deepmerge__default['default'].all(styles);
     return style;
 }
 
@@ -155,9 +186,9 @@ var TextureCache = /** @class */ (function () {
 }());
 
 function colorToPixi(color) {
-    var rgbaColor = rgba__default["default"](color);
+    var rgbaColor = rgba__default['default'](color);
     if (!rgbaColor) {
-        throw new Error("Invalid color ".concat(color));
+        throw new Error("Invalid color " + color);
     }
     var pixiColor = utils.rgb2hex([rgbaColor[0] / 255, rgbaColor[1] / 255, rgbaColor[2] / 255]);
     var alpha = rgbaColor[3];
@@ -796,6 +827,8 @@ var PixiGraph = /** @class */ (function (_super) {
     __extends(PixiGraph, _super);
     function PixiGraph(options) {
         var _this = _super.call(this) || this;
+        _this.iterationNum = 0;
+        _this.iterations = 0;
         _this.nodeKeyToNodeObject = new Map();
         _this.edgeKeyToEdgeObject = new Map();
         _this.selectNodeKeys = new Set();
@@ -817,10 +850,14 @@ var PixiGraph = /** @class */ (function (_super) {
         _this.onDocumentMouseUpBound = _this.onDocumentMouseUp.bind(_this);
         _this.container = options.container;
         _this.graph = options.graph;
+        _this.layoutConfig = options.layout;
         _this.style = options.style;
         _this.hoverStyle = options.hoverStyle;
         _this.selectStyle = options.selectStyle;
         _this.resources = options.resources;
+        // do layout
+        _this.createLayout();
+        _this.doLayout();
         if (!(_this.container instanceof HTMLElement)) {
             throw new Error('container should be a HTMLElement');
         }
@@ -930,7 +967,7 @@ var PixiGraph = /** @class */ (function (_super) {
             _this.graph.on('edgeAttributesUpdated', _this.onGraphEdgeAttributesUpdatedBound);
             _this.graph.on('eachNodeAttributesUpdated', _this.onGraphEachNodeAttributesUpdatedBound);
             _this.graph.on('eachEdgeAttributesUpdated', _this.onGraphEachEdgeAttributesUpdatedBound);
-            // initial draw
+            // init draw
             _this.createGraph();
             _this.resetView();
         });
@@ -953,6 +990,78 @@ var PixiGraph = /** @class */ (function (_super) {
         this.textureCache = undefined;
         this.app.destroy(true, { children: true, texture: true, baseTexture: true });
         this.app = undefined;
+    };
+    PixiGraph.prototype.createLayout = function () {
+        switch (this.layoutConfig.type) {
+            case 'circular':
+                this.layout = new layout.CircularLayout(this.layoutConfig);
+                break;
+            case 'concentric':
+                this.layout = new layout.ConcentricLayout(this.layoutConfig);
+                break;
+            case 'grid':
+                this.layout = new layout.GridLayout(this.layoutConfig);
+                break;
+            case 'dagre':
+                this.layout = new layout.DagreLayout(this.layoutConfig);
+                break;
+            case 'forceatlas2':
+                this.forceAtlas2Layout = new ForceAtlas2Layout(this.layoutConfig);
+                break;
+            default:
+                throw new Error("unsupported layout: " + this.layoutConfig.type);
+        }
+    };
+    PixiGraph.prototype.updateLayout = function (layoutConfig) {
+        this.layoutConfig = layoutConfig;
+        // create layout object if needed
+        if (this.layoutConfig.type !== layoutConfig.type) {
+            this.createLayout();
+        }
+        // do layout based on new config
+        this.doLayout();
+    };
+    PixiGraph.prototype.isForceLayout = function () {
+        return this.layoutConfig.type === 'forceatlas2';
+    };
+    PixiGraph.prototype.doForceLayout = function () {
+        console.time(this.layoutConfig.type);
+        if (this.layoutConfig.type === 'forceatlas2') {
+            // need to wait web worker layout failed
+            this.iterationNum = 0;
+            this.forceAtlas2Layout.runLayout(this.graph);
+        }
+    };
+    PixiGraph.prototype.doLayout = function () {
+        if (this.isForceLayout()) {
+            this.doForceLayout();
+            return;
+        }
+        console.time(this.layoutConfig.type);
+        var nodes = [];
+        var edges = [];
+        this.graph.forEachNode(function (nodeKey) {
+            return nodes.push({
+                id: nodeKey,
+            });
+        });
+        this.graph.forEachEdge(function (_edgeKey, _edgeAttributes, sourceNodeKey, targetNodeKey) {
+            edges.push({
+                source: sourceNodeKey,
+                target: targetNodeKey,
+            });
+        });
+        var layoutResult = this.layout.layout({
+            nodes: nodes,
+            edges: edges,
+        });
+        var positionedNodes = layoutResult.nodes;
+        for (var _i = 0, positionedNodes_1 = positionedNodes; _i < positionedNodes_1.length; _i++) {
+            var node = positionedNodes_1[_i];
+            this.graph.setNodeAttribute(node.id, 'x', node.x);
+            this.graph.setNodeAttribute(node.id, 'y', node.y);
+        }
+        console.timeEnd(this.layoutConfig.type);
     };
     Object.defineProperty(PixiGraph.prototype, "zoomStep", {
         get: function () {
@@ -990,7 +1099,7 @@ var PixiGraph = /** @class */ (function (_super) {
         var _this = this;
         var parallelEdgeMap = new Map();
         this.graph.forEachEdge(function (edgeKey, _edgeAttributes, sourceNodeKey, targetNodeKey) {
-            var key = "".concat(sourceNodeKey, "_").concat(targetNodeKey);
+            var key = sourceNodeKey + "_" + targetNodeKey;
             var count = (parallelEdgeMap.get(key) || 0) + 1;
             parallelEdgeMap.set(key, count);
             _this.graph.setEdgeAttribute(edgeKey, 'parallelSeq', count);
@@ -1040,7 +1149,29 @@ var PixiGraph = /** @class */ (function (_super) {
         this.updateEdgeStyleByKey(edgeKey);
     };
     PixiGraph.prototype.onGraphEachNodeAttributesUpdated = function () {
+        var _this = this;
+        // todo(lin)
+        // for force layout, seems the pixi-viewport and cull is not triggerd
+        if (this.layoutConfig.type === 'forceatlas2') {
+            this.iterationNum++;
+            if (this.iterationNum === 1) {
+                this.resetView();
+            }
+            if (this.iterationNum >= this.layoutConfig.iterations) {
+                this.forceAtlas2Layout.stopLayout();
+                console.timeEnd(this.layoutConfig.type);
+            }
+        }
+        this.graph.forEachNode(function (nodeKey, nodeAttributes) {
+            // console.log(nodeKey, nodeAttributes.x, nodeAttributes.y);
+            var node = _this.nodeKeyToNodeObject.get(nodeKey);
+            node.updatePosition({
+                x: nodeAttributes.x,
+                y: nodeAttributes.y,
+            });
+        });
         this.graph.forEachNode(this.updateNodeStyle.bind(this));
+        // this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
     };
     PixiGraph.prototype.onGraphEachEdgeAttributesUpdated = function () {
         this.graph.forEachEdge(this.updateEdgeStyle.bind(this));
@@ -1376,7 +1507,7 @@ var PixiGraph = /** @class */ (function (_super) {
         this.updateEdgeStyle(edgeKey, edgeAttributes, sourceNodeKey, targetNodeKey, sourceNodeAttributes, targetNodeAttributes);
     };
     PixiGraph.prototype.updateEdgeStyle = function (edgeKey, edgeAttributes, sourceNodeKey, targetNodeKey, _sourceNodeAttributes, targetNodeAttributes) {
-        var key = "".concat(sourceNodeKey, "_").concat(targetNodeKey);
+        var key = sourceNodeKey + "_" + targetNodeKey;
         var parallelEdgeCount = this.parallelEdgeMap.get(key) || 1;
         var parallelSeq = this.graph.getEdgeAttribute(edgeKey, 'parallelSeq');
         var isDirected = this.graph.isDirected(edgeKey);
@@ -1410,7 +1541,7 @@ var PixiGraph = /** @class */ (function (_super) {
         var zoom = this.viewport.scale.x;
         var zoomSteps = [0.1, 0.2, 0.4, Infinity];
         var zoomStep = zoomSteps.findIndex(function (zoomStep) { return zoom <= zoomStep; });
-        // console.log(zoom, zoomStep);
+        console.log(zoom, zoomStep);
         // zoomStep = 0, zoom <= 0.1
         //    node background
         // zoomStep = 1,    0.1 < zoom <= 0.2
@@ -1426,7 +1557,7 @@ var PixiGraph = /** @class */ (function (_super) {
             node.updateVisibility(zoomStep);
         });
         this.graph.forEachEdge(function (edgeKey, _edgeAttributes, sourceNodeKey, targetNodeKey) {
-            var key = "".concat(sourceNodeKey, "_").concat(targetNodeKey);
+            var key = sourceNodeKey + "_" + targetNodeKey;
             var parallelEdgeCount = _this.parallelEdgeMap.get(key) || 0;
             var parallelSeq = _this.graph.getEdgeAttribute(edgeKey, 'parallelSeq');
             var edge = _this.edgeKeyToEdgeObject.get(edgeKey);
