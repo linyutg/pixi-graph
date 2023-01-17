@@ -1045,6 +1045,8 @@ var PixiGraph = /** @class */ (function (_super) {
             this.doForceLayout();
             return;
         }
+        // stop force layout first
+        this.forceAtlas2Layout.stopLayout();
         console.time(this.layoutConfig.type);
         var nodes = [];
         var edges = [];
@@ -1066,6 +1068,7 @@ var PixiGraph = /** @class */ (function (_super) {
         var positionedNodes = layoutResult.nodes;
         var i = 0;
         // assume the order is the same between layout and graph
+        // batch update graph position
         this.graph.updateEachNodeAttributes(function (_node, attr) {
             attr.x = positionedNodes[i].x;
             attr.y = positionedNodes[i].y;

@@ -378,6 +378,9 @@ export class PixiGraph<
       return;
     }
 
+    // stop force layout first
+    this.forceAtlas2Layout.stopLayout();
+
     console.time(this.layoutConfig.type);
     let nodes: Node[] = [];
     let edges: Edge[] = [];
