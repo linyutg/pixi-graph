@@ -214,7 +214,8 @@ export function updateEdgeVisibility(
   zoomStep: number,
   isSelfLoop: boolean,
   parallelEdgeCount: number,
-  parallelSeq: number
+  parallelSeq: number,
+  alwaysShowEdge?: boolean
 ) {
   const edgeLine = edgeGfx.getChildByName!(EDGE_LINE) as Sprite;
   const edgeArrow = edgeGfx.getChildByName!(EDGE_ARROW) as Sprite;
@@ -223,9 +224,9 @@ export function updateEdgeVisibility(
 
   if (isStraightLine(isSelfLoop, parallelEdgeCount, parallelSeq)) {
     // edgeGfx -> edgeLine
-    edgeLine.visible = zoomStep >= 2;
+    edgeLine.visible = zoomStep >= 2 || !!alwaysShowEdge;
     // edgeGFX -> edgeArrow
-    edgeArrow.visible = zoomStep >= 3;
+    edgeArrow.visible = zoomStep >= 3 || !!alwaysShowEdge;
 
     // hide curve
     edgeCurve.visible = false;

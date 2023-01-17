@@ -185,14 +185,10 @@
           hoverStyle,
           selectStyle,
           resources,
+          renderOptions: {
+            alwaysShowEdge: true,
+          },
         });
-
-        setTimeout(() => {
-          pixiGraph.updateLayout({
-            type: 'circular',
-            radius: 1000,
-          });
-        }, 2000);
 
         pixiGraph.on('rightClick', (event) => console.log('rightClick', event));
         pixiGraph.on('nodeClick', (event, nodeKey) => console.log('nodeClick', event, nodeKey));

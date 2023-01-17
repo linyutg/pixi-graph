@@ -85,6 +85,9 @@ declare class ForceAtlas2Layout {
 }
 
 declare type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions;
+declare type RenderOptions = {
+    alwaysShowEdge?: boolean;
+};
 interface GraphOptions<NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes, EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes> {
     container: HTMLElement;
     graph: AbstractGraph<NodeAttributes, EdgeAttributes>;
@@ -93,6 +96,7 @@ interface GraphOptions<NodeAttributes extends BaseNodeAttributes = BaseNodeAttri
     hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     resources?: IAddOptions[];
+    renderOptions?: RenderOptions;
 }
 interface PixiGraphEvents {
     rightClick: (event: MouseEvent) => void;
@@ -119,6 +123,7 @@ declare class PixiGraph<NodeAttributes extends BaseNodeAttributes = BaseNodeAttr
     forceAtlas2Layout: ForceAtlas2Layout;
     iterationNum: number;
     iterations: number;
+    renderOptions: RenderOptions;
     style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
     selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;

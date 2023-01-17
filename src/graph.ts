@@ -58,6 +58,10 @@ const WORLD_PADDING = 100;
 
 type LayoutOptions = ILayout.LayoutOptions | ForceAtlas2LayoutOptions;
 
+type RenderOptions = {
+  alwaysShowEdge?: boolean;
+};
+
 export interface GraphOptions<
   NodeAttributes extends BaseNodeAttributes = BaseNodeAttributes,
   EdgeAttributes extends BaseEdgeAttributes = BaseEdgeAttributes
@@ -70,6 +74,7 @@ export interface GraphOptions<
   hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   resources?: IAddOptions[];
+  renderOptions?: RenderOptions;
 }
 
 interface PixiGraphEvents {
@@ -108,6 +113,7 @@ export class PixiGraph<
   forceAtlas2Layout: ForceAtlas2Layout;
   iterationNum = 0;
   iterations = 0;
+  renderOptions: RenderOptions;
   style: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   hoverStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
   selectStyle: GraphStyleDefinition<NodeAttributes, EdgeAttributes>;
@@ -156,6 +162,7 @@ export class PixiGraph<
     this.container = options.container;
     this.graph = options.graph;
     this.layoutConfig = options.layout;
+    this.renderOptions = options.renderOptions || {};
     this.style = options.style;
     this.hoverStyle = options.hoverStyle;
     this.selectStyle = options.selectStyle;
@@ -1042,7 +1049,13 @@ export class PixiGraph<
         const parallelSeq = this.graph.getEdgeAttribute(edgeKey, 'parallelSeq') as number;
 
         const edge = this.edgeKeyToEdgeObject.get(edgeKey)!;
-        edge.updateVisibility(zoomStep, sourceNodeKey === targetNodeKey, parallelEdgeCount, parallelSeq);
+        edge.updateVisibility(
+          zoomStep,
+          sourceNodeKey === targetNodeKey,
+          parallelEdgeCount,
+          parallelSeq,
+          this.renderOptions.alwaysShowEdge
+        );
       }
     );
   }

@@ -164,8 +164,14 @@ export class PixiEdge extends TypedEmitter<PixiEdgeEvents> {
     updateEdgeStyle(this.edgeGfx, edgeStyle, textureCache, isDirected, isSelfLoop, parallelEdgeCount, parallelSeq);
   }
 
-  updateVisibility(zoomStep: number, isSelfLoop: boolean, parallelEdgeCount: number, parallelSeq: number) {
-    updateEdgeVisibility(this.edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq);
+  updateVisibility(
+    zoomStep: number,
+    isSelfLoop: boolean,
+    parallelEdgeCount: number,
+    parallelSeq: number,
+    alwaysShowEdge?: boolean
+  ) {
+    updateEdgeVisibility(this.edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq, alwaysShowEdge);
     updateEdgeLabelVisibility(this.edgeLabelGfx, zoomStep);
   }
 }

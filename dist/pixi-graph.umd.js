@@ -65143,16 +65143,16 @@ if (vType < 0.5) {
             edgeCurve.lineStyle({ width: edgeStyle.width, color: color, alpha: alpha });
         }
     }
-    function updateEdgeVisibility(edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq) {
+    function updateEdgeVisibility(edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq, alwaysShowEdge) {
         var edgeLine = edgeGfx.getChildByName(EDGE_LINE);
         var edgeArrow = edgeGfx.getChildByName(EDGE_ARROW);
         var edgeCurve = edgeGfx.getChildByName(EDGE_CURVE);
         var edgeCurveArrow = edgeGfx.getChildByName(EDGE_CURVE_ARROW);
         if (isStraightLine(isSelfLoop, parallelEdgeCount, parallelSeq)) {
             // edgeGfx -> edgeLine
-            edgeLine.visible = zoomStep >= 2;
+            edgeLine.visible = zoomStep >= 2 || !!alwaysShowEdge;
             // edgeGFX -> edgeArrow
-            edgeArrow.visible = zoomStep >= 3;
+            edgeArrow.visible = zoomStep >= 3 || !!alwaysShowEdge;
             // hide curve
             edgeCurve.visible = false;
             edgeCurveArrow.visible = false;
@@ -65320,8 +65320,8 @@ if (vType < 0.5) {
         PixiEdge.prototype.updateStyle = function (edgeStyle, textureCache, isDirected, isSelfLoop, parallelEdgeCount, parallelSeq) {
             updateEdgeStyle(this.edgeGfx, edgeStyle, textureCache, isDirected, isSelfLoop, parallelEdgeCount, parallelSeq);
         };
-        PixiEdge.prototype.updateVisibility = function (zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq) {
-            updateEdgeVisibility(this.edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq);
+        PixiEdge.prototype.updateVisibility = function (zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq, alwaysShowEdge) {
+            updateEdgeVisibility(this.edgeGfx, zoomStep, isSelfLoop, parallelEdgeCount, parallelSeq, alwaysShowEdge);
             updateEdgeLabelVisibility(this.edgeLabelGfx, zoomStep);
         };
         return PixiEdge;
@@ -65383,6 +65383,7 @@ if (vType < 0.5) {
             _this.container = options.container;
             _this.graph = options.graph;
             _this.layoutConfig = options.layout;
+            _this.renderOptions = options.renderOptions || {};
             _this.style = options.style;
             _this.hoverStyle = options.hoverStyle;
             _this.selectStyle = options.selectStyle;
@@ -66100,7 +66101,7 @@ if (vType < 0.5) {
                 var parallelEdgeCount = _this.parallelEdgeMap.get(key) || 0;
                 var parallelSeq = _this.graph.getEdgeAttribute(edgeKey, 'parallelSeq');
                 var edge = _this.edgeKeyToEdgeObject.get(edgeKey);
-                edge.updateVisibility(zoomStep, sourceNodeKey === targetNodeKey, parallelEdgeCount, parallelSeq);
+                edge.updateVisibility(zoomStep, sourceNodeKey === targetNodeKey, parallelEdgeCount, parallelSeq, _this.renderOptions.alwaysShowEdge);
             });
         };
         return PixiGraph;
